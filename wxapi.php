@@ -5,6 +5,7 @@
  * @author: jason
  * @since:  2017-09-06 10:53
  */
+include_once 'wechat.php';
 class Wxapi {
     private static $_instance = null;
 
