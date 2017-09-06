@@ -16,7 +16,7 @@ class Wxapi {
     private function __construct() { }
 
     public function __clone() {
-        file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-clone is forbidden');
+        file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-clone is forbidden'.PHP_EOL, FILE_APPEND);
     }
 
     public static function getInstance() {
@@ -37,15 +37,15 @@ class Wxapi {
                 $this->token = trim($arg);
             }
         }
-
+        file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . print_r($rt, 1).PHP_EOL, FILE_APPEND);
         if (!class_exists('SimpleXMLElement')){
-            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-SimpleXMLElement class not exist');
+            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-SimpleXMLElement class not exist'.PHP_EOL, FILE_APPEND);
         }
         if (!function_exists('dom_import_simplexml')){
-            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-dom_import_simplexml function not exist');
+            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-dom_import_simplexml function not exist'.PHP_EOL, FILE_APPEND);
         }
         if(!preg_match("/^[0-9a-zA-Z]{3,42}$/", $this->token)){
-            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-error token, only support characters and number');
+            file_put_contents('/tmp/wxmini', date('Y-m-d H:i:s') . '-error token, only support characters and number'.PHP_EOL, FILE_APPEND);
         }
         $this->weixin = new Wechat($this->token);
         $this->data = $this->weixin->request();
