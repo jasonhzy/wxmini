@@ -87,7 +87,7 @@ switch($type){
         exit(json_encode($ret));
         break;
     case 'pay':
-        include_once('WxPayPubHelper/WxPayPubHelper.php');
+        include_once('lib/WxPayPubHelper/WxPayPubHelper.php');
 
         $openid = isset($_POST['openid']) ? trim($_POST['openid']) : '';
         if(empty($openid)){

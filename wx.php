@@ -5,6 +5,6 @@
  * @author: jason
  * @since:  2017-09-06 11:07
  */
-require_once 'wxapi.php';
+require_once 'lib/wxapi.php';
 $wx = Wxapi::getInstance();
 $wx->index();

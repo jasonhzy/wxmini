@@ -57,7 +57,6 @@ class Wxapi {
         }
     }
 
-
     private function reply($data){
         file_put_contents('/tmp/wechat', date('Y-m-d H:i:s').'-'.json_encode($data).PHP_EOL, FILE_APPEND);
         if (isset($data['Event'])) {

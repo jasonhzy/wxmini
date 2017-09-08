@@ -1,21 +1,106 @@
 <?php
 class Wechat {
 
+    private $signature = '';
+    private $timestamp = '';
+    private $nonce = '';
+    private $token = ''; //Token(令牌)
+    private $msgcrypt = '';
+    private $hasAES = false;
     private $data = array();
 
+
     public function __construct($token) {
-        $this->auth($token) || exit;
+        $this->signature = $_GET["signature"];
+        $this->timestamp = $_GET["timestamp"];
+        $this->nonce = $_GET["nonce"];
+        $this->token = $token;
+        $this->msg_signature = $_GET["msg_signature"];
+        $this->auth() || exit;
         if (strtolower($_SERVER['REQUEST_METHOD']) == 'get') {
             echo($_GET['echostr']);
             exit;
         }else {
+            //可根据token参数获取相应的加密密钥、AppID等参数
+            $encodingAESKey = 'D0o8aAIZNfxWJ2EeGmKheadc9Vpe8OZZ8YcbXtLqPUW'; //EncodingAESKey(消息加密密钥)
+            $appId = 'wx22f0f5085f846137'; //AppID(微信公众号或者小程序ID)
+
+            $this->msgcrypt = new WXBizMsgCrypt($this->token, $encodingAESKey, $appId);
             $xml = $GLOBALS["HTTP_RAW_POST_DATA"];
             if(empty($xml)) {
                 $xml = file_get_contents("php://input");
             }
+            if(isset($_GET['encrypt_type']) && strtolower($_GET['encrypt_type']) == 'aes' ){
+                //有加密信息
+                $decryptMsg = $this->decryptMsg($xml);
+                if($decryptMsg === false){
+                    //TODO: 解密失败
+                }else{
+                    $xml = $decryptMsg;
+                    $this->hasAES = true;
+                }
+            }
             $this->data = (array)simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
         }
     }
+
+    /**
+     * 	作用：产生随机字符串，不长于32位
+     */
+    public function createNoncestr( $length = 32 ) {
+        $chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        $str ="";
+        for ( $i = 0; $i < $length; $i++ )  {
+            $str.= substr($chars, mt_rand(0, strlen($chars)-1), 1);
+        }
+        return $str;
+    }
+
+    /**
+     *  [encryptMsg 加密消息]
+     *  @param  [type] $xml            [待加密消息XML格式]
+     *  @param  [type] $encodingAesKey [43位的encodingAesKey]
+     *  @param  [type] $token          [token]
+     *  @param  [type] $appId          [公众号APPID]
+     *  @return [type]                 [false标识解密失败，否则为加密后的字符串]
+     */
+    private function encryptMsg($xml) {
+        $timestamp = time();
+        $nonce = $this->createNoncestr(9);
+        $encryptMsg = '';
+        $errCode = $this->msgcrypt->encryptMsg($xml, $timestamp, $nonce, $encryptMsg);
+        if ($errCode == 0) {
+            return $encryptMsg;
+        } else {
+            return false;
+        }
+    }
+    /**
+     *  [decryptMsg 解密消息体]
+     *  @param  [type] $encryptMsg [加密的消息体]
+     *  @return [type]             [false =>解密失败，否则为解密后的消息]
+     */
+    private function decryptMsg($encryptMsg) {
+        $xml_tree = new DOMDocument();
+        $xml_tree->loadXML($encryptMsg);
+        $array_e = $xml_tree->getElementsByTagName('Encrypt');
+        //$array_s = $xml_tree->getElementsByTagName('MsgSignature');
+        $encrypt = $array_e->item(0)->nodeValue;
+        //$msg_sign = $array_s->item(0)->nodeValue;
+
+        $format = "<xml><ToUserName><![CDATA[toUser]]></ToUserName><Encrypt><![CDATA[%s]]></Encrypt></xml>";
+        $from_xml = sprintf($format, $encrypt);
+
+        // 第三方收到公众号平台发送的消息
+        $msg = '';
+        $errCode = $this->msgcrypt->decryptMsg($this->msg_signature, $this->timestamp, $this->nonce, $from_xml, $msg);
+        if ($errCode == 0) {
+            return $msg;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * 获取微信推送的数据
      * @return array 转换为数组后的数据
@@ -41,7 +126,11 @@ class Wechat {
         /* 转换数据为XML */
         $xml = new SimpleXMLElement('<xml></xml>');
         $this->data2xml($xml, $this->data);
-        exit($xml->asXML());
+        if($this->hasAES){
+            exit($this->encryptMsg($xml->asXML()));
+        }else{
+            exit($xml->asXML());
+        }
     }
     /**
      * 回复文本信息
@@ -95,15 +184,12 @@ class Wechat {
             }
         }
     }
-    private function auth($token) {
-        $signature = $_GET["signature"];
-        $timestamp = $_GET["timestamp"];
-        $nonce = $_GET["nonce"];
-        $tmpArr = array($token, $timestamp, $nonce);
+    private function auth() {
+        $tmpArr = array($this->token, $this->timestamp, $this->nonce);
         sort($tmpArr, SORT_STRING);
         $tmpStr = implode($tmpArr);
         $tmpStr = sha1($tmpStr);
-        if (trim($tmpStr) == trim($signature)) {
+        if (trim($tmpStr) == trim($this->signature)) {
             return true;
         }else {
             return false;
