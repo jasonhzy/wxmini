@@ -1,4 +1,5 @@
 <?php
+include_once 'wxBizMsgCrypt.php';
 class Wechat {
 
     private $signature = '';
