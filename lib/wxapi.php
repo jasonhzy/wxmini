@@ -80,7 +80,8 @@ class Wxapi {
                     break;
             }
         }else if (isset($data['MsgType'])) {
-
+            //消息转发到客服
+            return array('turn on transfer_customer_service', 'transfer_customer_service');
         }
     }
 }
