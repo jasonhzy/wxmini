@@ -54,7 +54,7 @@ Page({
   getOpenId: function (code) {
     var that = this;
     wx.request({
-      url: "https://phpdemo.beecloud.cn/wxmini.php",
+      url: app.globalData.url + 'wxmini.php',
       data: {
         code: code,
         type: 'openid'
@@ -90,7 +90,7 @@ Page({
   generateOrder: function (openid) {
     var that = this;
     wx.request({
-      url: "https://phpdemo.beecloud.cn/wxmini.php",
+      url: app.globalData.url + 'wxmini.php',
       data: {
         type: 'pay',
         openid : openid
@@ -151,7 +151,7 @@ Page({
       return;
     }
     wx.request({
-      url: 'https://phpdemo.beecloud.cn/wxmini.php',
+      url: app.globalData.url + 'wxmini.php',
       data: {
         'form_id': e.detail.formId,
         'openid': openid,
